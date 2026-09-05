@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Audit Trail · Revenue Recovery Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0B1526;
+    --bg: #EFF2F7;
+    --card: #FFFFFF;
+    --line: #E6E9F0;
+    --ink: #141A2A;
+    --muted: #7B879C;
+    --muted-2: #9AA5B8;
+    --blue: #2F62E8;
+    --blue-soft: rgba(47,98,232,.10);
+    --green: #1FA971;
+    --green-soft: rgba(31,169,113,.12);
+    --amber: #E39A2D;
+    --amber-soft: rgba(227,154,45,.14);
+    --red: #D2495A;
+    --red-soft: rgba(210,73,90,.12);
+    --purple: #8B5CF6;
+    --purple-soft: rgba(139,92,246,.14);
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(20,26,42,.04), 0 10px 30px -12px rgba(20,26,42,.10);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--ink); font-family: 'Inter', sans-serif; min-height: 100vh;
+  }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  .app-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 24px; background: var(--navy);
+  }
+  .brand { font-size: 19px; font-weight: 800; color: #fff; letter-spacing: -.02em; }
+  .brand b { color: var(--blue); }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .avatar {
+    width: 34px; height: 34px; border-radius: 9px;
+    background: linear-gradient(135deg, #2F62E8, #6B4CE0);
+    color: #fff; font-weight: 700; font-size: 12.5px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logout-btn {
+    background: transparent; border: 1px solid rgba(255,255,255,.15);
+    color: #9AAAC7; font-size: 12px; padding: 6px 12px; border-radius: 8px; cursor: pointer;
+  }
+  .logout-btn:hover { color: #fff; border-color: rgba(255,255,255,.3); }
+
+  .app-body { display: flex; background: var(--bg); min-height: calc(100vh - 63px); }
+  .app-sidebar {
+    width: 210px; flex: none; background: var(--navy);
+    padding: 16px 12px 20px; display: flex; flex-direction: column; gap: 2px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+    border-radius: 9px; color: #93A0B8; font-size: 13.5px; font-weight: 600;
+    cursor: pointer; text-decoration: none;
+  }
+  .nav-item.active { background: var(--blue); color: #fff; }
+  .nav-item svg { width: 16px; height: 16px; flex: none; }
+
+  .app-main { flex: 1; padding: 24px 26px 40px; min-width: 0; }
+  .main-head h2 { font-size: 22px; margin: 0 0 3px; font-weight: 800; letter-spacing: -.01em; }
+  .main-head .sub { color: var(--muted); font-size: 13px; margin: 0 0 18px; }
+
+  .panel {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 14px; box-shadow: var(--shadow); overflow: hidden;
+  }
+  .panel-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; gap: 10px;
+  }
+  .panel-head h3 { margin: 0; font-size: 15px; font-weight: 800; }
+  .filter-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .filter-row select {
+    background: #fff; border: 1px solid var(--line); border-radius: 7px;
+    padding: 6px 8px; font-family: 'JetBrains Mono'; font-size: 11.5px;
+  }
+  .pill-btn {
+    background: #fff; border: 1px solid var(--line); padding: 7px 12px; border-radius: 9px;
+    font-size: 12px; font-weight: 600; color: var(--ink); cursor: pointer;
+  }
+  .pill-btn:hover { border-color: var(--blue); color: var(--blue); }
+  .refresh-note { font-size: 11px; color: var(--muted); }
+
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  thead th {
+    text-align: left; padding: 9px 14px; color: var(--muted-2); font-weight: 700;
+    text-transform: uppercase; font-size: 10.5px; letter-spacing: .04em;
+    border-bottom: 1px solid var(--line); background: #FBFCFE;
+  }
+  tbody td { padding: 9px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #F8F9FC; }
+  .empty-row td { color: var(--muted); text-align: center; padding: 30px; white-space: normal; }
+
+  .action-pill { font-size: 10.5px; padding: 3px 8px; border-radius: 20px; font-weight: 700; }
+  .action-pill.RETRY_NOW { background: var(--green-soft); color: var(--green); }
+  .action-pill.RETRY_LATER { background: var(--blue-soft); color: var(--blue); }
+  .action-pill.NUDGE { background: var(--amber-soft); color: var(--amber); }
+  .action-pill.ESCALATE { background: var(--blue-soft); color: var(--blue); }
+  .action-pill.STOP { background: var(--red-soft); color: var(--red); }
+
+  .source-badge {
+    display: inline-flex; align-items: center; font-family: 'JetBrains Mono';
+    font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: .03em;
+    padding: 3px 8px; border-radius: 6px; background: #EEF1F6; color: var(--muted);
+  }
+  .source-badge.hard_guardrail { background: #EEF1F6; color: var(--muted-2); }
+  .source-badge.mock_llm { background: #EEF1F6; color: var(--muted-2); }
+  .source-badge.llm { background: var(--blue-soft); color: var(--blue); }
+  .source-badge.ev_optimizer { background: var(--green-soft); color: var(--green); }
+  .source-badge.bandit { background: var(--purple-soft); color: var(--purple); }
+  .source-badge.circuit_breaker { background: var(--amber-soft); color: var(--amber); }
+  .source-badge.fraud_guard { background: var(--red-soft); color: var(--red); }
+  .source-badge.error_fallback { background: var(--red-soft); color: var(--red); }
+  .source-badge.human-review { background: var(--purple-soft); color: var(--purple); }
+</style>
+</head>
+<body>
+
+<div class="app-topbar">
+  <div class="brand">Flow<b>Recover</b></div>
+  <div class="topbar-right">
+    <div class="avatar" id="avatarInitials">--</div>
+    <button class="logout-btn" onclick="doLogout()">Logout</button>
+  </div>
+</div>
+
+<div class="app-body">
+  <div class="app-sidebar">
+    <a class="nav-item" href="/dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      Control Room
+    </a>
+    <a class="nav-item active" href="/audit-trail">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16M4 12h16M4 19h10"/></svg>
+      Audit Trail
+    </a>
+    <a class="nav-item" href="/review">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Review Queue
+    </a>
+  </div>
+
+  <div class="app-main">
+    <div class="main-head">
+      <h2>Audit Trail</h2>
+      <p class="sub">Every decision the agent has made on payments submitted through Control Room, logged and filterable.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h3>Full ledger</h3>
+        <div class="filter-row">
+          <select id="filterAction" onchange="refreshLedger()">
+            <option value="">All actions</option>
+            <option value="RETRY_NOW">RETRY_NOW</option>
+            <option value="RETRY_LATER">RETRY_LATER</option>
+            <option value="NUDGE">NUDGE</option>
+            <option value="ESCALATE">ESCALATE</option>
+            <option value="STOP">STOP</option>
+          </select>
+          <button class="pill-btn" onclick="refreshLedger()">Refresh</button>
+          <span class="mono refresh-note" id="refreshNote">—</span>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Txn ID</th><th>Amount</th><th>Bank</th><th>Reason</th>
+              <th>Conf.</th><th>Action</th><th>Source</th><th>Logged</th>
+            </tr>
+          </thead>
+          <tbody id="ledgerBody">
+            <tr class="empty-row"><td colspan="8">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ===== AUTH =====
+  (function () {
+    const name = localStorage.getItem('rra_operator');
+    if (!name) {
+      window.location.href = '/dashboard';
+      return;
+    }
+    document.getElementById('avatarInitials').textContent = name.slice(0, 2).toUpperCase();
+  })();
+
+  function doLogout() {
+    localStorage.removeItem('rra_operator');
+    localStorage.removeItem('rra_op_id');
+    localStorage.removeItem('rra_email');
+    localStorage.removeItem('rra_token');
+    window.location.href = '/dashboard';
+  }
+
+  function authHeaders(extra) {
+    const h = Object.assign({}, extra || {});
+    const token = localStorage.getItem('rra_token');
+    if (token) h['Authorization'] = 'Bearer ' + token;
+    return h;
+  }
+
+  function fmtMoney(n) {
+    return '₹' + Number(n).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+  }
+
+  async function refreshLedger() {
+    const body = document.getElementById('ledgerBody');
+    const note = document.getElementById('refreshNote');
+
+    let rows = [];
+    try {
+      const res = await fetch('/audit?limit=100', { headers: authHeaders() });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      rows = await res.json();
+    } catch (e) {
+      body.innerHTML = `<tr class="empty-row"><td colspan="8">Couldn't load the ledger (${e.message}). <button class="pill-btn" onclick="refreshLedger()">Retry</button></td></tr>`;
+      return;
+    }
+
+    const filter = document.getElementById('filterAction').value;
+    if (filter) rows = rows.filter(r => (r.action || '').includes(filter));
+
+    if (!rows.length) {
+      body.innerHTML = '<tr class="empty-row"><td colspan="8">No transactions logged yet. Submit a failed payment in Control Room first.</td></tr>';
+      note.textContent = 'updated ' + new Date().toLocaleTimeString();
+      return;
+    }
+
+    body.innerHTML = rows.map(row => {
+      const action = row.action || '';
+      const source = row.source || '—';
+      return `<tr>
+        <td class="mono">${row.txn_id ?? ''}</td>
+        <td>${fmtMoney(row.amount ?? 0)}</td>
+        <td>${row.bank ?? ''}</td>
+        <td>${(row.predicted_reason ?? '').replaceAll('_', ' ')}</td>
+        <td>${row.confidence != null ? (row.confidence * 100).toFixed(0) + '%' : ''}</td>
+        <td><span class="action-pill ${action}">${action.replaceAll('_', ' ')}</span></td>
+        <td><span class="source-badge ${source}">${source.replaceAll('_', ' ')}</span></td>
+        <td class="mono">${row.logged_at ? (row.logged_at.split('T')[1] || '').split('.')[0] : ''}</td>
+      </tr>`;
+    }).join('');
+    note.textContent = 'updated ' + new Date().toLocaleTimeString();
+  }
+
+  refreshLedger();
+</script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: revenue-recovery-agent
+    runtime: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt && python generate_data.py && python train_detective.py"
+    startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      # Optional — leave unset to run on the mock decision layer.
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      # Optional — off by default, matches auth.py's REQUIRE_AUTH default.
+      - key: REQUIRE_AUTH
+        value: "0"
+      - key: JWT_SECRET
+        generateValue: true
