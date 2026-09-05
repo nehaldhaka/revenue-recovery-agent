@@ -1,6 +1,6 @@
 # Revenue Recovery Agent
 
-[![tests](https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME/actions/workflows/test.yml/badge.svg)](https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME/actions/workflows/test.yml)
+[![tests](https://github.com/nehaldhaka/revenue-recovery-agent/actions/workflows/test.yml/badge.svg)](https://github.com/nehaldhaka/revenue-recovery-agent/actions/workflows/test.yml)
 
 **Live demo:** [https://your-app-name.onrender.com](https://your-app-name.onrender.com) *(replace with your Render/Railway URL)*
 
